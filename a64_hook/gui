@@ -1,0 +1,42 @@
+GUI Framebuffer Overlay for a64_hook
+=======================================
+
+Portable kernel-space markdown-style GUI overlay for QEMU
+virtio-gpu on Android GKI kernels (5.10-6.x). No DRM, no
+fbdev — parses /proc/kallsyms at runtime for all symbols.
+
+Features:
+  - Markdown-style rendering in kernel space
+  - Rectangles, text, colors (hex RGB like FF0F3460)
+  - Virtual window management with Z-ordering
+  - FPS counter and swap chain
+  - Procfs control interface: /proc/a64_hook_gui
+  - virtio-gpu framebuffer backend (virtio-gpu-pci)
+
+Control commands (echo to /proc/a64_hook_gui):
+  clear FF1A1A2E              — clear to color
+  rect x y w h color          — filled rectangle
+  text x y fg bg "string"     — render text
+  fps                         — toggle FPS counter
+  window id x y w h           — create/resize window
+  swap                        — swap buffers (double-buffer)
+
+QEMU test:
+  cd qemu_test/
+  ./run.sh gui                — VNC mode (localhost:5900)
+  Connect via: open vnc://localhost:5900
+
+Dependencies:
+  - CONFIG_VIRTIO_GPU=y (or =m) in kernel
+  - QEMU -device virtio-gpu-pci
+  - /proc/kallsyms readable
+
+Files:
+  src/a64_hook_gui.c       — GUI rendering engine
+  src/a64_hook_gui_win.c   — window manager
+  src/a64_hook_virtio_fb.c — virtio-gpu fb backend
+
+Contact:
+  c4x64@proton.me
+  t.me/prabhasrizz
+  https://github.com/c4x64/KernelHook

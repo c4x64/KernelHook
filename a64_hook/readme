@@ -1,12 +1,10 @@
-a64_hook - ARM64 Inline Hook Engine + GUI Framebuffer Overlay
-=============================================================
+a64_hook - ARM64 Inline Hook Kernel Module
+=============================================
 
-ARM64 inline hook engine with a portable kernel-space GUI
-framebuffer overlay for QEMU virtio-gpu on Android GKI kernels
-(5.10-6.x). Uses runtime-only symbol resolution via /proc/kallsyms
-— no DRM, no fbdev, no hardcoded addresses.
+ARM64 inline hook engine using DMA-based physical memory patching.
+Supports Android 12-16 (API 31+) and iOS (A12-A16 SoCs).
 
-Hook Engine Features:
+Features:
   - DMA physical memory writes (ioremap + memcpy_toio)
   - stop_machine atomic patching
   - Kprobe/kretprobe fallback
@@ -15,27 +13,20 @@ Hook Engine Features:
   - Integrity checker (corruption detection + repair)
   - Perf monitoring (call count, cycle timing)
   - ARMv8.0-v8.6 decode (SVE, MTE, PAC, BTI, FP16)
-  - 146/146 user-space tests passing
-
-GUI Overlay (a64_hook_gui + a64_hook_win):
-  - Markdown-style rendering in kernel space
-  - Rectangles, text, colors (hex RGB)
-  - Virtual window management with Z-ordering
-  - virtio-gpu framebuffer backend (no DRM)
-  - Procfs control: /proc/a64_hook_gui
-  - Commands: clear, rect, text, fps, window, swap
+  - User-space test suite (146 tests)
 
 Build:
-  make KERNELDIR=/path/to/kernel/build/dir \
+  Requires an Android or Linux kernel build tree.
+
+  make KERNELDIR=/path/to/kernel/build/dir
+  make KERNELDIR=/path/to/android-kernel/out \
     ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
 
-  Docker cross-build:
+  Docker cross-build (see scripts/build_docker.sh):
     ./scripts/build_docker.sh
 
-QEMU Test:
-  cd qemu_test/
-  ./run.sh              # nographic test
-  ./run.sh gui          # VNC mode (vnc://localhost:5900)
+  User-space test (native host):
+    make test
 
 Install on Android:
   adb push a64_hook.ko /data/local/tmp/
@@ -43,22 +34,12 @@ Install on Android:
 
 Verify:
   cat /proc/a64_hook
-  cat /proc/a64_hook_gui
-
-GUI Commands:
-  echo "clear FF1A1A2E" > /proc/a64_hook_gui
-  echo "rect 10 10 100 40 FF0F3460" > /proc/a64_hook_gui
-  echo "text 20 20 FFFFFF 0F3460 Hello" > /proc/a64_hook_gui
-  echo "window 0 10 10 200 100" > /proc/a64_hook_gui
 
 API:
   See include/a64_hook.h for the full public API.
-  GUI API: a64_gui_init(), a64_gui_command(), etc.
 
 Status:
   146/146 user-space tests passing.
-  Module init confirmed working on mainline 5.15.194.
-  Requires matching kernel config for struct module layout.
 
 Contact:
   c4x64@proton.me
