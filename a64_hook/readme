@@ -1,10 +1,12 @@
-a64_hook - ARM64 Inline Hook Kernel Module
-=============================================
+a64_hook - ARM64 Inline Hook Engine + GUI Framebuffer Overlay
+=============================================================
 
-ARM64 inline hook engine using DMA-based physical memory patching.
-Supports Android 12-16 (API 31+) and iOS (A12-A16 SoCs).
+ARM64 inline hook engine with a portable kernel-space GUI
+framebuffer overlay for QEMU virtio-gpu on Android GKI kernels
+(5.10-6.x). Uses runtime-only symbol resolution via /proc/kallsyms
+— no DRM, no fbdev, no hardcoded addresses.
 
-Features:
+Hook Engine Features:
   - DMA physical memory writes (ioremap + memcpy_toio)
   - stop_machine atomic patching
   - Kprobe/kretprobe fallback
@@ -13,77 +15,52 @@ Features:
   - Integrity checker (corruption detection + repair)
   - Perf monitoring (call count, cycle timing)
   - ARMv8.0-v8.6 decode (SVE, MTE, PAC, BTI, FP16)
-  - User-space test suite (146 tests)
+  - 146/146 user-space tests passing
 
-Build
------
+GUI Overlay (a64_hook_gui + a64_hook_win):
+  - Markdown-style rendering in kernel space
+  - Rectangles, text, colors (hex RGB)
+  - Virtual window management with Z-ordering
+  - virtio-gpu framebuffer backend (no DRM)
+  - Procfs control: /proc/a64_hook_gui
+  - Commands: clear, rect, text, fps, window, swap
 
-Requires an Android or Linux kernel build tree.
+Build:
+  make KERNELDIR=/path/to/kernel/build/dir \
+    ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
 
-  make KERNELDIR=/path/to/kernel/build/dir
-  make KERNELDIR=/path/to/android-kernel/out ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
+  Docker cross-build:
+    ./scripts/build_docker.sh
 
-Docker cross-build (see scripts/build_docker.sh):
+QEMU Test:
+  cd qemu_test/
+  ./run.sh              # nographic test
+  ./run.sh gui          # VNC mode (vnc://localhost:5900)
 
-  ./scripts/build_docker.sh
-
-User-space test (native host):
-
-  make test
-
-Output: a64_hook_test - runs all 146 tests on the host CPU.
-
-Install
--------
-
+Install on Android:
   adb push a64_hook.ko /data/local/tmp/
   adb shell su -c "insmod /data/local/tmp/a64_hook.ko"
 
-Test on BlueStacks
-------------------
+Verify:
+  cat /proc/a64_hook
+  cat /proc/a64_hook_gui
 
-1. Enable root in BlueStacks settings (Settings > Advanced > ADB + Root)
-2. Cross-compile module for BlueStacks kernel:
+GUI Commands:
+  echo "clear FF1A1A2E" > /proc/a64_hook_gui
+  echo "rect 10 10 100 40 FF0F3460" > /proc/a64_hook_gui
+  echo "text 20 20 FFFFFF 0F3460 Hello" > /proc/a64_hook_gui
+  echo "window 0 10 10 200 100" > /proc/a64_hook_gui
 
-    1. Grab BlueStacks kernel config from /proc/config.gz on device
-    2. Build kernel tree matching BlueStacks kernel version
-    3. make KERNELDIR=... ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
+API:
+  See include/a64_hook.h for the full public API.
+  GUI API: a64_gui_init(), a64_gui_command(), etc.
 
-3. Load module:
+Status:
+  146/146 user-space tests passing.
+  Module init confirmed working on mainline 5.15.194.
+  Requires matching kernel config for struct module layout.
 
-    adb push a64_hook.ko /data/local/tmp/
-    adb shell su -c "insmod /data/local/tmp/a64_hook.ko"
-
-4. Verify:
-
-    adb shell su -c "cat /sys/kernel/debug/a64_hook/status"
-
-API
----
-
-See include/a64_hook.h for the full public API.
-
-  struct a64_hook hook;
-  a64_hook_init(&hook, "my_hook", target_addr, handler_addr,
-                A64_HOOK_TYPE_DETOUR, A64_HOOK_DEFAULT_FLAGS);
-  a64_hook_install(&hook);
-  a64_hook_enable(&hook);
-  // ... target is now hooked ...
-  a64_hook_disable(&hook);
-  a64_hook_uninstall(&hook);
-
-Status
-------
-
-146/146 user-space tests passing.
-
-Module build requires a kernel source tree with loadable module
-support (CONFIG_MODULES=y). Tested on Android 14 (6.1 kernel)
-and Apple M1/M2 (iOS 16+).
-
-Contact
--------
-
-Email: c4x64@proton.me
-Telegram: t.me/prabhasrizz
-GitHub: https://github.com/c4x64/KernelHook
+Contact:
+  c4x64@proton.me
+  t.me/prabhasrizz
+  https://github.com/c4x64/KernelHook
