@@ -1,0 +1,22 @@
+KernelHook - ARM64 Inline Hook Engine + GUI Framebuffer Overlay
+
+Portable kernel-space hook engine and QEMU virtio-gpu framebuffer
+overlay for Android GKI kernels (5.10-6.x), using runtime-only
+symbol resolution via /proc/kallsyms (no hardcoded addresses).
+
+Features:
+  - DMA physical memory patching + stop_machine atomic hooks
+  - Kprobe/kretprobe fallback, hook chaining, BPF integration
+  - Markdown-style GUI overlay in kernel space (virtio-gpu/fb)
+  - Portable across Android 12-16 GKI (no DRM/fbdev dependency)
+  - Procfs and misc device control interface
+  - 146/146 user-space tests passing
+
+Build:
+  make KERNELDIR=/path/to/kernel/build/dir \
+    ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
+
+QEMU test (see qemu_test/):
+  ./qemu_test/run.sh
+
+Contact: c4x64@proton.me  t.me/prabhasrizz
