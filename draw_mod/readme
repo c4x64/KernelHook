@@ -1,0 +1,13 @@
+draw_mod - Simple framebuffer test module for QEMU virt
+
+Allocates a 640x480x32 framebuffer (vzalloc) and exposes
+it via /proc/test_gui. Minimal test to verify virtio-gpu
+framebuffer access from kernel space.
+
+Build:
+  make -C /path/to/kernel M=$(pwd) \
+    ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
+
+Files:
+  test_simple.c  — module source
+  Makefile       — kbuild
