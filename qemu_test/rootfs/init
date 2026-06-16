@@ -1,0 +1,18 @@
+#!/bin/busybox sh
+BUSYBOX=/bin/busybox
+$BUSYBOX mount -t proc none /proc
+$BUSYBOX mount -t sysfs none /sys
+$BUSYBOX mount -t devtmpfs none /dev
+$BUSYBOX mkdir -p /mnt/host
+$BUSYBOX mount -t 9p -o trans=virtio,version=9p2000.L hostshare /mnt/host
+echo 0 > /proc/sys/kernel/kptr_restrict 2>/dev/null
+
+echo "=== loading a64_hook ===" > /dev/console
+$BUSYBOX insmod /lib/a64_hook.ko 2>&1
+echo "EXIT=$?" > /dev/console
+
+$BUSYBOX sleep 1
+echo "=== /proc/a64_hook ===" > /dev/console
+$BUSYBOX cat /proc/a64_hook > /dev/console 2>&1 || echo "(no proc entry)" > /dev/console
+echo "=== DONE ===" > /dev/console
+$BUSYBOX sleep 300

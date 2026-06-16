@@ -1,0 +1,52 @@
+//
+// Android.bp - Build liba64hook with Soong (AOSP / NDK)
+//
+cc_library_shared {
+    name: "liba64hook",
+    srcs: ["liba64hook.c"],
+    export_include_dirs: ["."],
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-O2",
+        "-fPIC",
+    ],
+    ldflags: ["-lpthread"],
+    vendor_available: true,
+    product_available: true,
+    recovery_available: true,
+    target: {
+        android: {
+            cflags: ["-DA64_LIB_PLATFORM_ANDROID"],
+        },
+    },
+}
+
+cc_library_static {
+    name: "liba64hook_static",
+    srcs: ["liba64hook.c"],
+    export_include_dirs: ["."],
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-O2",
+        "-fPIC",
+    ],
+    vendor_available: true,
+    product_available: true,
+    recovery_available: true,
+}
+
+cc_binary {
+    name: "a64_hook_test",
+    srcs: ["liba64hook_test.c"],
+    shared_libs: ["liba64hook"],
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-O2",
+    ],
+}

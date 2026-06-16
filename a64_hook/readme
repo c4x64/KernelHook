@@ -1,0 +1,89 @@
+a64_hook - ARM64 Inline Hook Kernel Module
+=============================================
+
+ARM64 inline hook engine using DMA-based physical memory patching.
+Supports Android 12-16 (API 31+) and iOS (A12-A16 SoCs).
+
+Features:
+  - DMA physical memory writes (ioremap + memcpy_toio)
+  - stop_machine atomic patching
+  - Kprobe/kretprobe fallback
+  - Hook chaining (multiple hooks per address)
+  - BPF handler integration
+  - Integrity checker (corruption detection + repair)
+  - Perf monitoring (call count, cycle timing)
+  - ARMv8.0-v8.6 decode (SVE, MTE, PAC, BTI, FP16)
+  - User-space test suite (146 tests)
+
+Build
+-----
+
+Requires an Android or Linux kernel build tree.
+
+  make KERNELDIR=/path/to/kernel/build/dir
+  make KERNELDIR=/path/to/android-kernel/out ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
+
+Docker cross-build (see scripts/build_docker.sh):
+
+  ./scripts/build_docker.sh
+
+User-space test (native host):
+
+  make test
+
+Output: a64_hook_test - runs all 146 tests on the host CPU.
+
+Install
+-------
+
+  adb push a64_hook.ko /data/local/tmp/
+  adb shell su -c "insmod /data/local/tmp/a64_hook.ko"
+
+Test on BlueStacks
+------------------
+
+1. Enable root in BlueStacks settings (Settings > Advanced > ADB + Root)
+2. Cross-compile module for BlueStacks kernel:
+
+    1. Grab BlueStacks kernel config from /proc/config.gz on device
+    2. Build kernel tree matching BlueStacks kernel version
+    3. make KERNELDIR=... ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
+
+3. Load module:
+
+    adb push a64_hook.ko /data/local/tmp/
+    adb shell su -c "insmod /data/local/tmp/a64_hook.ko"
+
+4. Verify:
+
+    adb shell su -c "cat /sys/kernel/debug/a64_hook/status"
+
+API
+---
+
+See include/a64_hook.h for the full public API.
+
+  struct a64_hook hook;
+  a64_hook_init(&hook, "my_hook", target_addr, handler_addr,
+                A64_HOOK_TYPE_DETOUR, A64_HOOK_DEFAULT_FLAGS);
+  a64_hook_install(&hook);
+  a64_hook_enable(&hook);
+  // ... target is now hooked ...
+  a64_hook_disable(&hook);
+  a64_hook_uninstall(&hook);
+
+Status
+------
+
+146/146 user-space tests passing.
+
+Module build requires a kernel source tree with loadable module
+support (CONFIG_MODULES=y). Tested on Android 14 (6.1 kernel)
+and Apple M1/M2 (iOS 16+).
+
+Contact
+-------
+
+Email: c4x64@proton.me
+Telegram: t.me/prabhasrizz
+GitHub: https://github.com/c4x64/KernelHook

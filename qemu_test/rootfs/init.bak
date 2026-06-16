@@ -1,0 +1,145 @@
+#!/bin/busybox sh
+
+/bin/busybox mount -t proc none /proc
+/bin/busybox mount -t sysfs none /sys
+/bin/busybox mount -t devtmpfs none /dev
+
+/bin/busybox mkdir -p /mnt/host
+/bin/busybox mount -t 9p -o trans=virtio,version=9p2000.L hostshare /mnt/host
+
+OUT=/mnt/host/test_results.txt
+BUSYBOX=/bin/busybox
+
+echo "a64_hook QEMU test suite" > $OUT
+
+#===============================================================================
+# 1. Module load
+#===============================================================================
+echo "" >> $OUT
+echo "=== 1. insmod ===" >> $OUT
+$BUSYBOX insmod /lib/a64_hook.ko >> $OUT 2>&1
+echo "insmod=$?" >> $OUT
+
+$BUSYBOX rmmod a64_hook >> $OUT 2>&1 &
+$BUSYBOX sleep 1
+
+echo "" >> $OUT
+echo "=== 2. dev check ===" >> $OUT
+$BUSYBOX ls -la /dev/a64_hook >> $OUT 2>&1
+echo "dev_a64_hook=$?" >> $OUT
+
+echo "" >> $OUT
+echo "=== 3. selftest ===" >> $OUT
+echo "selftest" > /proc/a64_hook 2>>$OUT
+echo "selftest_exit=$?" >> $OUT
+
+echo "" >> $OUT
+echo "=== 4. list (empty) ===" >> $OUT
+$BUSYBOX cat /proc/a64_hook >> $OUT 2>&1
+
+#===============================================================================
+# 2. Hook install (DETOUR + trampoline)
+#===============================================================================
+echo "" >> $OUT
+echo "=== 5. hook hrtimer_nanosleep ===" >> $OUT
+echo "hook hrtimer_nanosleep" > /proc/a64_hook 2>>$OUT
+echo "nano_install=$?" >> $OUT
+
+echo "" >> $OUT
+echo "=== 6. list (1 hook) ===" >> $OUT
+$BUSYBOX cat /proc/a64_hook >> $OUT 2>&1
+
+#===============================================================================
+# 3. Trigger hook and check hit counter (trampoline fixes handler call)
+#===============================================================================
+echo "" >> $OUT
+echo "=== 7. trigger hook (sleep 2) ===" >> $OUT
+$BUSYBOX sleep 2
+echo "trigger_sleep_exit=$?" >> $OUT
+
+echo "" >> $OUT
+echo "=== 8. list after trigger (should show hits) ===" >> $OUT
+$BUSYBOX cat /proc/a64_hook >> $OUT 2>&1
+
+echo "" >> $OUT
+echo "=== 9. stats ===" >> $OUT
+echo "stats" > /proc/a64_hook 2>>$OUT
+$BUSYBOX cat /proc/a64_hook >> $OUT 2>&1
+
+#===============================================================================
+# 4. liba64hook test binary
+#===============================================================================
+echo "" >> $OUT
+echo "=== 10. liba64hook list ===" >> $OUT
+/lib/a64_hook_test_static list >> $OUT 2>&1
+echo "lib_list=$?" >> $OUT
+
+echo "" >> $OUT
+echo "=== 11. liba64hook stats ===" >> $OUT
+/lib/a64_hook_test_static stats >> $OUT 2>&1
+echo "lib_stats=$?" >> $OUT
+
+echo "" >> $OUT
+echo "=== 12. liba64hook hits ===" >> $OUT
+/lib/a64_hook_test_static hits hrtimer_nanosleep >> $OUT 2>&1
+echo "lib_hits=$?" >> $OUT
+
+echo "" >> $OUT
+echo "=== 13. liba64hook clear ===" >> $OUT
+/lib/a64_hook_test_static clear >> $OUT 2>&1
+echo "lib_clear=$?" >> $OUT
+
+#===============================================================================
+# 5. Unhook
+#===============================================================================
+echo "" >> $OUT
+echo "=== 14. unhook ===" >> $OUT
+echo "unhook hrtimer_nanosleep" > /proc/a64_hook 2>>$OUT
+echo "nano_unhook=$?" >> $OUT
+
+echo "" >> $OUT
+echo "=== 15. list (empty again) ===" >> $OUT
+$BUSYBOX cat /proc/a64_hook >> $OUT 2>&1
+
+#===============================================================================
+# 6. GUI overlay test
+#===============================================================================
+echo "" >> $OUT
+echo "=== 16. GUI framework check ===" >> $OUT
+$BUSYBOX ls -la /proc/a64_hook_gui >> $OUT 2>&1
+echo "gui_proc=$?" >> $OUT
+
+echo "" >> $OUT
+echo "=== 17. GUI draw commands ===" >> $OUT
+echo "clear FF1A1A2E" > /proc/a64_hook_gui 2>>$OUT
+echo "gui_clear=$?" >> $OUT
+echo "rect 10 10 100 40 FF0F3460" > /proc/a64_hook_gui 2>>$OUT
+echo "gui_rect=$?" >> $OUT
+echo "text 20 20 FFFFFF 0F3460 Hello from kernel!" > /proc/a64_hook_gui 2>>$OUT
+echo "gui_text=$?" >> $OUT
+echo "rect 200 200 240 80 E94560" > /proc/a64_hook_gui 2>>$OUT
+echo "gui_rect2=$?" >> $OUT
+echo "text 210 220 FFFFFF E94560 a64_hook GUI" > /proc/a64_hook_gui 2>>$OUT
+echo "gui_text2=$?" >> $OUT
+
+echo "" >> $OUT
+echo "=== 18. GUI status ===" >> $OUT
+$BUSYBOX cat /proc/a64_hook_gui >> $OUT 2>&1
+
+echo "" >> $OUT
+echo "=== 19. GUI framebuffer dump ===" >> $OUT
+/lib/gui_dump /mnt/host/gui_output.ppm >> $OUT 2>&1
+echo "gui_dump=$?" >> $OUT
+$BUSYBOX ls -la /mnt/host/gui_output.ppm >> $OUT 2>&1
+echo "gui_ppm=$?" >> $OUT
+
+echo "" >> $OUT
+echo "=== 20. exit ===" >> $OUT
+echo "exit" > /proc/a64_hook 2>>$OUT
+$BUSYBOX sleep 1
+echo "DONE" >> $OUT
+
+$BUSYBOX sync
+echo "View GUI via VNC (localhost:5900) — poweroff in 15s..." >> $OUT
+$BUSYBOX sleep 15
+$BUSYBOX poweroff -f

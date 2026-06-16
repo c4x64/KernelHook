@@ -1,0 +1,169 @@
+a64_hook QEMU test suite
+
+=== 1. insmod ===
+insmod=0
+
+=== 2. dev check ===
+crw-------    1 0        0          10, 125 Jan  1 00:00 /dev/a64_hook
+dev_a64_hook=0
+
+=== 3. selftest ===
+selftest_exit=0
+
+=== 4. list (empty) ===
+=== a64_hook v2.1.0 ===
+Uptime:         246 jiffies
+Total hooks:    0
+Enabled:        0
+Disabled:       0
+Errors:         0
+Total hits:     0
+DMA writes:     2
+Bytes written:  8
+Cache flushes:  2
+Trampolines:    0
+DMA mappings:   0
+Kprobe fbacks:  0
+BPF attach:     0
+Chain depth:    0
+OOM count:      0
+Peak hooks:     0
+Stop machine:   2
+
+Name                             Type         State      Target             Hits     Symbol
+-------------------------------- ----------   ---------  ------------------ -------- ------
+
+=== 5. hook hrtimer_nanosleep ===
+nano_install=0
+
+=== 6. list (1 hook) ===
+=== a64_hook v2.1.0 ===
+Uptime:         249 jiffies
+Total hooks:    1
+Enabled:        1
+Disabled:       0
+Errors:         0
+Total hits:     0
+DMA writes:     2
+Bytes written:  8
+Cache flushes:  6
+Trampolines:    2
+DMA mappings:   0
+Kprobe fbacks:  0
+BPF attach:     0
+Chain depth:    0
+OOM count:      0
+Peak hooks:     1
+Stop machine:   3
+
+Name                             Type         State      Target             Hits     Symbol
+-------------------------------- ----------   ---------  ------------------ -------- ------
+hrtimer_nanosleep                DETOUR       ENABLED    0xffff80000811bcd4 0        hrtimer_nanosleep+0x0
+
+=== 7. trigger hook (sleep 2) ===
+trigger_sleep_exit=0
+
+=== 8. list after trigger (should show hits) ===
+=== a64_hook v2.1.0 ===
+Uptime:         752 jiffies
+Total hooks:    1
+Enabled:        1
+Disabled:       0
+Errors:         0
+Total hits:     0
+DMA writes:     2
+Bytes written:  8
+Cache flushes:  6
+Trampolines:    2
+DMA mappings:   0
+Kprobe fbacks:  0
+BPF attach:     0
+Chain depth:    0
+OOM count:      0
+Peak hooks:     1
+Stop machine:   3
+
+Name                             Type         State      Target             Hits     Symbol
+-------------------------------- ----------   ---------  ------------------ -------- ------
+hrtimer_nanosleep                DETOUR       ENABLED    0xffff80000811bcd4 0        hrtimer_nanosleep+0x0
+
+=== 9. stats ===
+=== a64_hook v2.1.0 ===
+Uptime:         753 jiffies
+Total hooks:    1
+Enabled:        1
+Disabled:       0
+Errors:         0
+Total hits:     0
+DMA writes:     2
+Bytes written:  8
+Cache flushes:  6
+Trampolines:    2
+DMA mappings:   0
+Kprobe fbacks:  0
+BPF attach:     0
+Chain depth:    0
+OOM count:      0
+Peak hooks:     1
+Stop machine:   3
+
+Name                             Type         State      Target             Hits     Symbol
+-------------------------------- ----------   ---------  ------------------ -------- ------
+hrtimer_nanosleep                DETOUR       ENABLED    0xffff80000811bcd4 0        hrtimer_nanosleep+0x0
+
+=== 10. liba64hook list ===
+  Name                 Type     State      Target             Hits   Symbol
+  hrtimer_nanosleep    DETOUR   ENABLED    0xffff80000811bcd4 hits=0     hrtimer_nanosleep+0x0
+lib_list=0
+
+=== 11. liba64hook stats ===
+Uptime (jiffies): 0
+Total hooks:      1
+Enabled:          1
+Disabled:         0
+Error:            0
+Total hits:       0
+DMA writes:       2
+Bytes written:    8
+Cache flushes:    6
+Trampolines:      2
+Kprobe fallbacks: 0
+Peak hooks:       1
+lib_stats=0
+
+=== 12. liba64hook hits ===
+hits hrtimer_nanosleep: 0
+lib_hits=0
+
+=== 13. liba64hook clear ===
+clear: Success (0)
+lib_clear=0
+
+=== 14. unhook ===
+nano_unhook=0
+
+=== 15. list (empty again) ===
+=== a64_hook v2.1.0 ===
+Uptime:         4294893176 jiffies
+Total hooks:    0
+Enabled:        0
+Disabled:       0
+Errors:         0
+Total hits:     0
+DMA writes:     0
+Bytes written:  0
+Cache flushes:  1
+Trampolines:    0
+DMA mappings:   0
+Kprobe fbacks:  0
+BPF attach:     0
+Chain depth:    0
+OOM count:      0
+Peak hooks:     0
+Stop machine:   1
+
+Name                             Type         State      Target             Hits     Symbol
+-------------------------------- ----------   ---------  ------------------ -------- ------
+
+=== 16. exit ===
+DONE
